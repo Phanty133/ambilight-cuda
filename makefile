@@ -30,9 +30,9 @@ ifeq ($(UNAME), Linux)
 	LIBS += -ldl -lcuda
 endif
 
-SOURCES = src/main.cu src/CudaUtils.cpp src/NvFBCUtils.cpp
+SOURCES = src/main.cu src/CudaUtils.cpp src/NvFBCUtils.cpp src/NvFBCCudaCapture.cpp
 OBJECTS = $(call BUILD_OBJECT_LIST,$(SOURCES))
-HEADERS = inc/NvFBCUtils.h inc/cuda.h inc/CudaUtils.h inc/NvFBC.h 
+HEADERS = inc/NvFBCUtils.h inc/cuda.h inc/CudaUtils.h inc/NvFBC.h inc/NvFBCCudaCapture.h 
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
 .PHONY: default all clean
