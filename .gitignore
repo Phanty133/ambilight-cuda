@@ -1,0 +1,6 @@
+.vscode
+techtests
+*.o
+*.out
+*.bmp
+ambilight
