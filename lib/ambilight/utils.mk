@@ -19,32 +19,33 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
-include ./utils.mk
 
-UNAME = $(shell uname)
-TARGET = ambilight
+# This is used to detects architecture as well as provide overrides
+OSUPPER = $(shell uname -s 2>/dev/null | tr "[:lower:]" "[:upper:]")
+OSLOWER = $(shell uname -s 2>/dev/null | tr "[:upper:]" "[:lower:]")
 
-CC = nvcc
-CFLAGS = -Iinc
-ifeq ($(UNAME), Linux)
-	LIBS += -ldl -lcuda
-endif
+OS_ARCH = $(shell uname -m)
 
-SOURCES = src/main.cu src/CudaUtils.cpp src/NvFBCUtils.cpp src/NvFBCCudaCapture.cpp src/FrameProcessing.cu src/AmbilightProcessor.cu
-OBJECTS = $(call BUILD_OBJECT_LIST,$(SOURCES))
-HEADERS = inc/NvFBCUtils.h inc/cuda.h inc/CudaUtils.h inc/NvFBC.h inc/NvFBCCudaCapture.h inc/FrameProcessing.cuh inc/AmbilightProcessor.cuh
+# Detecting the location of the CUDA Toolkit if needed
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
-.PHONY: default all clean
+##############################################################################
+# function to generate a list of object files from their corresponding
+# source files; example usage:
+#
+# OBJECTS = $(call BUILD_OBJECT_LIST,$(SOURCES))
+##############################################################################
 
-default: $(TARGET)
-all: default
+BUILD_OBJECT_LIST = $(notdir $(addsuffix .o,$(basename $(1))))
 
-$(foreach src,$(SOURCES),$(eval $(call DEFINE_OBJECT_RULE,$(src),$(HEADERS))))
+##############################################################################
+# function to define a rule to build an object file; $(1) is the source
+# file to compile, and $(2) is any other dependencies.
+##############################################################################
 
-$(TARGET): $(OBJECTS)
-	$(NVCC) $(OBJECTS) $(LIBS) -o $@
+define DEFINE_OBJECT_RULE
+  $$(call BUILD_OBJECT_LIST,$(1)): $(1) $(2)
+	$(CC) --compiler-options '-fPIC' $(CFLAGS) -c $$< -o $$@
+endef
 
-clean:
-	-rm -f *.o *.bmp 
-	-rm -f $(TARGET)
