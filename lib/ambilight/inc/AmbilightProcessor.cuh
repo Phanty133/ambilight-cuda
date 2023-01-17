@@ -5,6 +5,7 @@
 #include <cuda.h>
 #include "FrameProcessing.cuh"
 #include "NvFBCCudaCapture.h"
+#include "CudaUtils.h"
 
 struct FrameData {
 	unsigned int sectorCount;
@@ -34,9 +35,10 @@ private:
 
 	static void decodeHSV(uint64_t &encodedHsv, WideHSVPixel &hsv);
 public:
-	AmbilightProcessor(CUcontext cuCtx, KernelParams kernelParams, Sector* sectorMap);
+	AmbilightProcessor(KernelParams kernelParams, Sector* sectorMap);
 	~AmbilightProcessor();
 
+	bool initCUDA();
 	void allocMemory();
 	void deallocMemory();
 	void initCapture();

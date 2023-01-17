@@ -1,13 +1,9 @@
 #include "AmbilightProcessor.cuh"
 
 AmbilightProcessor::AmbilightProcessor(
-	CUcontext cuCtx,
 	KernelParams kernelParams,
 	Sector* sectorMap
 ) {
-	this->cuCtx = cuCtx;
-	this->fbcCapture = new NvFBCCudaCapture(cuCtx);
-
 	this->params = kernelParams;
 	this->sectorMap = sectorMap;
 
@@ -16,6 +12,16 @@ AmbilightProcessor::AmbilightProcessor(
 
 AmbilightProcessor::~AmbilightProcessor() {
 	delete this->fbcCapture;
+}
+
+bool AmbilightProcessor::initCUDA() {
+	if (cudaInit(&this->cuCtx) != NVFBC_TRUE) {
+		return false;
+	}
+
+	this->fbcCapture = new NvFBCCudaCapture(this->cuCtx);
+
+	return true;
 }
 
 void AmbilightProcessor::allocMemory() {

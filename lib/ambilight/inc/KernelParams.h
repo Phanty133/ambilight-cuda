@@ -1,3 +1,6 @@
+#ifndef __KERNEL_PARAMS_H
+#define __KERNEL_PARAMS_H
+
 struct KernelParams {
 	unsigned int frameSize;
 	unsigned int frameWidth;
@@ -20,4 +23,7 @@ struct SectorData {
 	// S - bits 22-42
 	// V - bits 43-63
 	unsigned long long hsvData;
+	int n;
 };
+
+#endif

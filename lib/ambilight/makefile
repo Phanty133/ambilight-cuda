@@ -44,6 +44,7 @@ $(foreach src,$(SOURCES),$(eval $(call DEFINE_OBJECT_RULE,$(src),$(HEADERS))))
 
 $(TARGET): $(OBJECTS)
 	$(NVCC) --shared --compiler-options '-fPIC' $(OBJECTS) $(LIBS) -o ./lib$@.so
+	# $(NVCC) $(OBJECTS) $(LIBS) -o ./$@.out
 
 clean:
 	-rm -f *.o *.bmp 

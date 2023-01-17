@@ -1,17 +1,53 @@
 #include <stdio.h>
 #include <cuda.h>
-#include <chrono>
-#include <iostream>
 #include "AmbilightProcessor.cuh"
-#include "CudaUtils.h"
+#include "KernelParams.h"
+
+extern "C" {
+	AmbilightProcessor* createProcessor(KernelParams params, Sector* sectorMap) {
+		return new AmbilightProcessor(params, sectorMap);
+	}
+
+	void destroyProcessor(AmbilightProcessor* p) {
+		if (p != NULL) {
+			delete p;
+			p = NULL;
+		}
+	}
+
+	bool pInitCUDA(AmbilightProcessor* p) {
+		return p->initCUDA();
+	}
+
+	void pAllocMemory(AmbilightProcessor* p) {
+		p->allocMemory();
+	}
+
+	void pDeallocMemory(AmbilightProcessor* p) {
+		p->deallocMemory();
+	}
+
+	void pInitCapture(AmbilightProcessor* p) {
+		p->initCapture();
+	}
+
+	void pGrabFrame(AmbilightProcessor* p) {
+		p->grabFrame();
+	}
+
+	size_t pGetFrameSize(AmbilightProcessor* p) {
+		return p->getFrameSize();
+	}
+
+	void pGetFrame(AmbilightProcessor* p, AveragedHSVPixel* outData) {
+		p->getFrame(outData);
+	}
+}
+
+// #include <chrono>
+// #include <iostream>
 
 int main() {
-	// CUcontext cuCtx;
-
-	// if (cudaInit(&cuCtx) != NVFBC_TRUE) {
-	// 	return EXIT_FAILURE;
-	// }
-
 	// // Generate basic test data
 
 	// // Set kernel parameters
@@ -34,7 +70,7 @@ int main() {
 	// }
 
 	// // Init processor
-	// AmbilightProcessor processor(cuCtx, params, sectors);
+	// AmbilightProcessor processor(params, sectors);
 
 	// processor.allocMemory();
 	// processor.initCapture();
