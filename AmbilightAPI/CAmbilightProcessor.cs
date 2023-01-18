@@ -51,4 +51,19 @@ public static class CAmbilightProcessor {
 
 	[DllImport("lib/ambilight/libambilight.so")]
 	static public extern void pGetFrame(IntPtr processor, ref CAveragedHSVPixel outData);
+
+	[DllImport("lib/ambilight/libambilight.so")]
+	static public extern void pStartContinuousGrabbing(IntPtr processor, int targetFPS);
+
+	[DllImport("lib/ambilight/libambilight.so")]
+	static public extern void pStopContinuousGrabbing(IntPtr processor);
+
+	[DllImport("lib/ambilight/libambilight.so")]
+	static public extern void pSetTargetFPS(IntPtr processor, int targetFPS);
+
+	[DllImport("lib/ambilight/libambilight.so")]
+	static public extern int pGetTargetFPS(IntPtr processor);
+
+	[DllImport("lib/ambilight/libambilight.so")]
+	static public extern float pGetActualFPS(IntPtr processor);
 }

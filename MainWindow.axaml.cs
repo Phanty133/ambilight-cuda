@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 
 using System;
+using System.Timers;
 using System.Collections.Generic;
 using AmbilightAPI;
 
@@ -13,6 +14,8 @@ public partial class MainWindow : Window
 		InitializeComponent();
 		TestAmbilight();
 	}
+
+	AmbilightProcessor processor;
 
 	void TestAmbilight() {
 		// Define kernel parameters
@@ -38,11 +41,23 @@ public partial class MainWindow : Window
 		var sectorMap = new SectorMap(sectors);
 
 		// Init processor
-		var processor = new AmbilightProcessor(kParams, sectorMap);
+		processor = new AmbilightProcessor(kParams, sectorMap);
 		processor.InitCapture();
 
 		// Get frame
-		var frame = processor.GetSingleFrame();
+		
+		processor.StartContinousGrabbing(30);
+
+		System.Timers.Timer aTimer = new System.Timers.Timer();
+		aTimer.Elapsed += new ElapsedEventHandler(TimerCb);
+		aTimer.Interval = 5000;
+		aTimer.Enabled = true;
+	}
+
+	void TimerCb(object? source, ElapsedEventArgs e) {
+		var frame = processor.ReadFrame();
+
+		Console.WriteLine("-------READ------");
 
 		if (frame != null) {
 			foreach (HSVPixel p in frame) {

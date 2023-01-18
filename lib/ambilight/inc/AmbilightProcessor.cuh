@@ -2,7 +2,10 @@
 #define __AMBILIGHT_PROCESSOR_H
 
 #include <stdint.h>
+#include <math.h>
 #include <cuda.h>
+#include <chrono>
+#include <mutex>
 #include "FrameProcessing.cuh"
 #include "NvFBCCudaCapture.h"
 #include "CudaUtils.h"
@@ -22,16 +25,16 @@ private:
 	size_t sectorMemSize;
 
 	// CUDA
-	CUcontext cuCtx;
-	NvFBCCudaCapture* fbcCapture;
+	CUcontext cuCtx = nullptr;
+	NvFBCCudaCapture* fbcCapture = nullptr;
 	unsigned int numBlocks;
 
-	KernelParams* cuParams;
-	Sector* cuSectorMap;
-	SectorData* cuFrameOutput;
+	KernelParams* cuParams = nullptr;
+	Sector* cuSectorMap = nullptr;
+	SectorData* cuFrameOutput = nullptr;
 
 	// Host memory
-	SectorData* frameOutput;
+	SectorData* frameOutput = nullptr;
 
 	static void decodeHSV(uint64_t &encodedHsv, WideHSVPixel &hsv);
 public:
@@ -41,9 +44,9 @@ public:
 	bool initCUDA();
 	void allocMemory();
 	void deallocMemory();
-	void initCapture();
+	bool initCapture();
 
-	void grabFrame();
+	void grabFrame(std::mutex* outputMutex = nullptr);
 	size_t getFrameSize();
 	void getFrame(AveragedHSVPixel* outData);
 };

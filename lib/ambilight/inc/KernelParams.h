@@ -23,7 +23,6 @@ struct SectorData {
 	// S - bits 22-42
 	// V - bits 43-63
 	unsigned long long hsvData;
-	int n;
 };
 
 #endif

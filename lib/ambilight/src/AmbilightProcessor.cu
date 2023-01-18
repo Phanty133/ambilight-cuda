@@ -11,7 +11,7 @@ AmbilightProcessor::AmbilightProcessor(
 }
 
 AmbilightProcessor::~AmbilightProcessor() {
-	delete this->fbcCapture;
+	if (this->fbcCapture != nullptr) delete this->fbcCapture;
 }
 
 bool AmbilightProcessor::initCUDA() {
@@ -42,15 +42,43 @@ void AmbilightProcessor::allocMemory() {
 	this->frameOutput = (SectorData*)malloc(this->outputMemSize);
 }
 
-void AmbilightProcessor::initCapture() {
-	this->fbcCapture->load();
-	this->fbcCapture->createInstance();
-	this->fbcCapture->createSessionHandle();
-	this->fbcCapture->createCaptureSession();
-	this->fbcCapture->setupCaptureSession();
+bool AmbilightProcessor::initCapture() {
+	if (this->cuCtx == nullptr) {
+		printf("Error initializing capture: CUDA not initialized\n");
+		return false;
+	}
+
+	if (!this->fbcCapture->load()) {
+		printf("Error initializing capture: Error loading NvFBC\n");
+		return false;
+	}
+
+	if (!this->fbcCapture->createInstance()) {
+		printf("Error initializing capture: Error creating NvFBC instance\n");
+		return false;
+	}
+
+	if (!this->fbcCapture->createSessionHandle()) {
+		printf("Error initializing capture: Error creating NvFBC session handle\n");
+		return false;
+	}
+
+	if (!this->fbcCapture->createCaptureSession()) {
+		printf("Error initializing capture: Error creating capture session\n");
+		return false;
+	}
+	
+	if (!this->fbcCapture->setupCaptureSession()) {
+		printf("Error initializing capture: Error setting up capture session\n");
+		return false;
+	}
+
+	return true;
 }
 
-void AmbilightProcessor::grabFrame() {
+// TODO: Check if the frame has changed enough by first getting a difference map
+// TODO: Possibly check which parts of the screen should be updated based on the difference map?
+void AmbilightProcessor::grabFrame(std::mutex* outputMutex) {
 	// Init memory
 	cudaMemset(cuFrameOutput, 0, this->outputMemSize);
 
@@ -68,6 +96,12 @@ void AmbilightProcessor::grabFrame() {
 
 	cudaDeviceSynchronize();
 
+	std::unique_lock<std::mutex> outputLock;
+
+	if (outputMutex != nullptr) {
+		outputLock = std::unique_lock<std::mutex>(*outputMutex);
+	}
+
 	// Copy data from GPU to host
 	cudaMemcpy(
 		this->frameOutput,
@@ -75,6 +109,10 @@ void AmbilightProcessor::grabFrame() {
 		this->outputMemSize,
 		cudaMemcpyDeviceToHost
 	);
+
+	if (outputMutex != nullptr) {
+		outputLock.unlock();
+	}
 }
 
 void AmbilightProcessor::decodeHSV(uint64_t &encodedHsv, WideHSVPixel &hsv) {
@@ -107,12 +145,14 @@ void AmbilightProcessor::getFrame(AveragedHSVPixel* outData) {
 }
 
 void AmbilightProcessor::deallocMemory() {
-	cudaFree(this->cuFrameOutput);
-	cudaFree(this->cuSectorMap);
-	cudaFree(this->cuParams);
+	if (this->cuFrameOutput != nullptr) cudaFree(this->cuFrameOutput);
+	if (this->cuSectorMap != nullptr) cudaFree(this->cuSectorMap);
+	if (this->cuParams != nullptr) cudaFree(this->cuParams);
 
-	free(this->frameOutput);
+	if (this->frameOutput != nullptr) free(this->frameOutput);
 
-	this->fbcCapture->destroyCaptureSession();
-	this->fbcCapture->destroySessionHandle();
+	if (this->fbcCapture != nullptr) {
+		this->fbcCapture->destroyCaptureSession();
+		this->fbcCapture->destroySessionHandle();
+	}
 }

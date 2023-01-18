@@ -1,9 +1,15 @@
 #include <stdio.h>
 #include <cuda.h>
+#include <thread>
 #include "AmbilightProcessor.cuh"
+#include "TAmbilightProcessor.cuh"
 #include "KernelParams.h"
 
 extern "C" {
+	/*
+		Synchronous processor functions
+	*/
+
 	AmbilightProcessor* createProcessor(KernelParams params, Sector* sectorMap) {
 		return new AmbilightProcessor(params, sectorMap);
 	}
@@ -42,44 +48,125 @@ extern "C" {
 	void pGetFrame(AmbilightProcessor* p, AveragedHSVPixel* outData) {
 		p->getFrame(outData);
 	}
+
+	/*
+		Threaded processor functions
+	*/
+
+	TAmbilightProcessor* createTProcessor(KernelParams params, Sector* sectorMap) {
+		return new TAmbilightProcessor(params, sectorMap);
+	}
+
+	std::thread* tpCreateThread(TAmbilightProcessor* p) {
+		return p->createThread();
+	}
+
+	std::thread* tpGetThread(TAmbilightProcessor* p) {
+		return p->getThread();
+	}
+
+	bool tpDetachThread(TAmbilightProcessor* p) {
+		return p->detachThread();
+	}
+
+	void tpStart(TAmbilightProcessor* p, int targetFPS) {
+		p->start(targetFPS);
+	}
+
+	void tpStop(TAmbilightProcessor* p) {
+		p->stop();
+	}
+
+	void tpKill(TAmbilightProcessor* p) {
+		p->kill();
+	}
+
+	void tpGetFrame(TAmbilightProcessor* p, AveragedHSVPixel* outData) {
+		p->getFrame(outData);
+	}
+
+	bool tpIsActive(TAmbilightProcessor* p) {
+		return p->isActive();
+	}
+
+	int tpGetTargetFPS(TAmbilightProcessor* p) {
+		return p->getTargetFPS();
+	}
+
+	float tpGetActualFPS(TAmbilightProcessor* p) {
+		return p->getActualFPS();
+	}
 }
 
-// #include <chrono>
-// #include <iostream>
+#include <chrono>
+#include <iostream>
 
 int main() {
-	// // Generate basic test data
+	// Generate basic test data
 
-	// // Set kernel parameters
-	// KernelParams params;
-	// params.frameWidth = 2560;
-	// params.frameHeight = 1600;
-	// params.frameSize = params.frameWidth * params.frameHeight;
-	// params.sectorCount = 10;
+	// Set kernel parameters
+	KernelParams params;
+	params.frameWidth = 2560;
+	params.frameHeight = 1600;
+	params.frameSize = params.frameWidth * params.frameHeight;
+	params.sectorCount = 10;
 
-	// // Define display sectors
-	// auto sectors = new Sector[params.sectorCount];
-	// int secWidth = params.frameWidth / params.sectorCount;
+	// Define display sectors
+	auto sectors = new Sector[params.sectorCount];
+	int secWidth = params.frameWidth / params.sectorCount;
 
-	// for (int i = 0; i < params.sectorCount; i++) {
-	// 	sectors[i].index = i;
-	// 	sectors[i].minX = i * secWidth;
-	// 	sectors[i].minY = 0;
-	// 	sectors[i].maxX = (i + 1) * secWidth;
-	// 	sectors[i].maxY = 100;
-	// }
+	for (int i = 0; i < params.sectorCount; i++) {
+		sectors[i].index = i;
+		sectors[i].minX = i * secWidth;
+		sectors[i].minY = 0;
+		sectors[i].maxX = (i + 1) * secWidth;
+		sectors[i].maxY = 100;
+	}
 
-	// // Init processor
-	// AmbilightProcessor processor(params, sectors);
+	// Init processor
 
-	// processor.allocMemory();
-	// processor.initCapture();
+	TAmbilightProcessor tProcessor(params, sectors);
 
-	// auto output = new AveragedHSVPixel[processor.getFrameSize()];
+	std::thread otherT([&tProcessor, &params](){
+		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-	// auto t1 = std::chrono::system_clock::now();
+		tProcessor.start(60);
+		auto output = new AveragedHSVPixel[params.sectorCount];
 
-	// processor.grabFrame();
+		int n = 0;
+
+		while (n++ < 30) {
+			printf("%f FPS\n", tProcessor.getActualFPS());
+			// tProcessor.getFrame(output);
+
+			// printf("Sector: (H, S, V)\n");
+
+			// for (int i = 0; i < params.sectorCount; i++) {
+			// 	auto sector = output[i];
+			// 	int h = (sector.h / 32) * 360;
+			// 	int s = (sector.s / 32) * 100;
+			// 	int v = (sector.v / 32) * 100;
+
+			// 	printf("%i: (%ideg, %i%%, %i%%)\n", i, h, s, v);
+			// }
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+
+		delete[] output;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+		tProcessor.stop();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+		tProcessor.kill();
+	});
+
+	tProcessor.createThread()->join();
+	otherT.join();
+
 	// processor.getFrame(output);
 
 	// printf("Sector: (H, S, V)");
@@ -98,7 +185,7 @@ int main() {
 
 	// std::cout << "Time taken: " << elapsed.count() << "ms\n";
 
-	// // Clean-up
+	// Clean-up
 
 	// processor.deallocMemory();
 	// delete[] output;

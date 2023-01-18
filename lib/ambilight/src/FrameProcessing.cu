@@ -36,6 +36,7 @@ __device__ void rgbToHSV(RGBPixel &rgb, HSVPixel &hsv) {
 	hsv.v = (uint8_t)(v * 32.0f);
 }
 
+// TODO: Precalculate middle of the screen minX, maxX, minY, minY values
 __device__ int getSectorIndex(
 	int pixelIndex,
 	KernelParams* params,
@@ -68,7 +69,6 @@ __device__ void parsePixel(RGBPixel &pixel, int &sectorIndex, SectorData* frameO
 
 	SectorData* sector = frameOut + sectorIndex;
 	atomicAdd(&(sector->hsvData), hsvData);
-	atomicAdd(&(sector->n), 1);
 }
 
 __global__ void parseFrameKernel(
