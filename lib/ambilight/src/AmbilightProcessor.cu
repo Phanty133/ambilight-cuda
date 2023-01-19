@@ -104,6 +104,8 @@ bool AmbilightProcessor::initCapture() {
 		return false;
 	}
 
+	this->fbcCapture->waitUntilReady = waitUntilReady;
+
 	return true;
 }
 
@@ -186,4 +188,10 @@ void AmbilightProcessor::deallocMemory() {
 		this->fbcCapture->destroyCaptureSession();
 		this->fbcCapture->destroySessionHandle();
 	}
+}
+
+void AmbilightProcessor::setCaptureReadyMode(bool waitUntilReady) {
+	printf("WaitUntilReady: %i\n", waitUntilReady);
+	this->waitUntilReady = waitUntilReady;
+	this->fbcCapture->waitUntilReady = waitUntilReady;
 }

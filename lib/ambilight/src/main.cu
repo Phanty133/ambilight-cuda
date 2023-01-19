@@ -98,10 +98,6 @@ extern "C" {
 	}
 }
 
-#include <chrono>
-#include <iostream>
-#include <vector>
-
 int main() {
 	// Generate basic test data
 
@@ -167,14 +163,14 @@ int main() {
 	std::thread otherT([&tProcessor, &params](){
 		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-		tProcessor.start(10000);
+		tProcessor.start(200, true);
 		auto output = new AveragedHSVPixel[params.sectorCount];
 
-		int n = 0;
+		int frames = 0;
 
-		while (n++ < 30) {
-			printf("%f FPS\n", tProcessor.getActualFPS());
-			// tProcessor.getFrame(output);
+		tProcessor.onFrameReady([&tProcessor, &output, &frames](){
+			tProcessor.getFrame(output);
+			frames++;
 
 			// printf("Sector: (H, S, V)\n");
 
@@ -186,7 +182,13 @@ int main() {
 
 			// 	printf("%i: (%ideg, %i%%, %i%%)\n", i, h, s, v);
 			// }
+		});
 
+		int n = 0;
+
+		while (n++ < 30) {
+			printf("%f FPS, counted: %i\n", tProcessor.getActualFPS(), frames);
+			frames = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
@@ -203,29 +205,6 @@ int main() {
 
 	tProcessor.createThread()->join();
 	otherT.join();
-
-	// processor.getFrame(output);
-
-	// printf("Sector: (H, S, V)");
-
-	// for (int i = 0; i < params.sectorCount; i++) {
-	// 	auto sector = output[i];
-	// 	int h = (sector.h / 32) * 360;
-	// 	int s = (sector.s / 32) * 100;
-	// 	int v = (sector.v / 32) * 100;
-
-	// 	printf("%i: (%ideg, %i%%, %i%%)\n", i, h, s, v);
-	// }
-
-	// auto t2 = std::chrono::system_clock::now();
-	// auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-
-	// std::cout << "Time taken: " << elapsed.count() << "ms\n";
-
-	// Clean-up
-
-	// processor.deallocMemory();
-	// delete[] output;
 
 	return 0;
 }

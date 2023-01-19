@@ -14,6 +14,8 @@ private:
 public:
 	NvFBCCudaCapture(CUcontext cuCtx);
 
+	bool waitUntilReady = false;
+
 	NVFBC_BOOL load();
 	NVFBC_BOOL createInstance();
 	NVFBC_BOOL createSessionHandle();

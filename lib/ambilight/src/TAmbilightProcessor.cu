@@ -1,9 +1,5 @@
 #include "TAmbilightProcessor.cuh"
 
-// int max(int a, int b) {
-// 	return a > b ? a : b;
-// }
-
 TAmbilightProcessor::TAmbilightProcessor(
 	KernelParams kernelParams,
 	Sector* sectorMap,
@@ -30,6 +26,7 @@ std::thread* TAmbilightProcessor::createThread() {
 		while (!this->mustKillThread) {
 			// Wait until the processor should be active
 			this->waitUntilActiveOrKilled();
+			tProcessor->setCaptureReadyMode(this->waitUntilReady);
 
 			// Grab frames while active
 			while (this->grabActive) {
@@ -40,6 +37,11 @@ std::thread* TAmbilightProcessor::createThread() {
 				// printf("Exec: %fms; Delay: %fms\n", execTimeUs / 1000.0f, delayTimeUs / 1000.0f);
 
 				this->frameTimeAvg.addItem(max(execTimeUs, this->targetFrameTime));
+
+				if (!this->frameReady) {
+					this->frameReady = true;
+					this->execFrameCallbacks();
+				}
 
 				std::this_thread::sleep_for(std::chrono::microseconds(delayTimeUs));
 			}
@@ -79,13 +81,14 @@ int TAmbilightProcessor::timedGrabFrame(AmbilightProcessor* tProcessor) {
 	auto t0 = std::chrono::system_clock::now();
 	tProcessor->grabFrame(&this->frameMutex);
 	auto t1 = std::chrono::system_clock::now();
-	
+
 	return std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
 }
 
-void TAmbilightProcessor::start(int targetFPS) {
-	this->targetFrameTime = 1000000.0f / targetFPS;
+void TAmbilightProcessor::start(int targetFPS, bool waitUntilReady) {
+	this->targetFrameTime = targetFPS == 0 ? 0 : (1000000.0f / targetFPS);
 	this->frameTimeAvg = RollingAverage(this->frameAveragingTime * targetFPS);
+	this->waitUntilReady = waitUntilReady;
 
 	this->grabActive = true;
 	this->tActiveCondVar.notify_all();
@@ -105,6 +108,7 @@ void TAmbilightProcessor::getFrame(AveragedHSVPixel* output) {
 	auto outputLock = std::unique_lock<std::mutex>(this->frameMutex);
 
 	this->tProcessor->getFrame(output);
+	this->frameReady = false;
 
 	outputLock.unlock();
 }
@@ -123,4 +127,22 @@ float TAmbilightProcessor::getActualFPS() {
 	if (avg == 0) return 0;
 
 	return 1000000.0f / avg;
+}
+
+void TAmbilightProcessor::onFrameReady(std::function<void()> cb) {
+	this->frameCallbacks.push_back(cb);
+}
+
+void TAmbilightProcessor::execFrameCallbacks() {
+	for (auto cb : this->frameCallbacks) {
+		cb();
+	}
+}
+
+bool TAmbilightProcessor::isFrameReady() {
+	return this->frameReady;
+}
+
+void TAmbilightProcessor::clearFrameReadyFlag() {
+	this->frameReady = false;
 }

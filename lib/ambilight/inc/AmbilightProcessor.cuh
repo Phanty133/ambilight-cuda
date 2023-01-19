@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <math.h>
 #include <cuda.h>
-#include <chrono>
 #include <mutex>
 #include <vector>
 #include "FrameProcessing.cuh"
@@ -23,6 +22,7 @@ private:
 	KernelParams params;
 	Sector* sectorMap;
 	Sector largestEmptySector;
+	bool waitUntilReady = false;
 
 	size_t outputMemSize;
 	size_t sectorMemSize;
@@ -49,6 +49,8 @@ public:
 	void allocMemory();
 	void deallocMemory();
 	bool initCapture();
+
+	void setCaptureReadyMode(bool waitUntilReady);
 
 	void grabFrame(std::mutex* outputMutex = nullptr);
 	size_t getFrameSize();

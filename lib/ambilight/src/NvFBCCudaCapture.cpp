@@ -33,7 +33,7 @@ NVFBC_BOOL NvFBCCudaCapture::setupCaptureSession() {
 }
 
 NVFBC_BOOL NvFBCCudaCapture::grabFrame(CUdeviceptr &cuDevicePtr) {
-	return nvfbcGrabFrame(this->instance, this->fbcHandle, cuDevicePtr);
+	return nvfbcGrabFrame(this->instance, this->fbcHandle, cuDevicePtr, this->waitUntilReady);
 }
 
 NVFBC_BOOL NvFBCCudaCapture::destroyCaptureSession() {

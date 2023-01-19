@@ -150,7 +150,8 @@ NVFBC_BOOL nvfbcDestroySessionHandle(NVFBC_API_FUNCTION_LIST &instance, NVFBC_SE
 NVFBC_BOOL nvfbcGrabFrame(
 	NVFBC_API_FUNCTION_LIST &instance,
 	NVFBC_SESSION_HANDLE &fbcHandle,
-	CUdeviceptr &cuDevicePtr
+	CUdeviceptr &cuDevicePtr,
+	bool waitUntilReady
 ) {
 	NVFBC_TOCUDA_GRAB_FRAME_PARAMS grabParams;
 	NVFBC_FRAME_GRAB_INFO frameInfo;
@@ -160,31 +161,16 @@ NVFBC_BOOL nvfbcGrabFrame(
 
 	grabParams.dwVersion = NVFBC_TOCUDA_GRAB_FRAME_PARAMS_VER;
 
-	/*
-	* Use asynchronous calls.
-	*
-	* The application will not wait for a new frame to be ready.  It will
-	* capture a frame that is already available.  This might result in
-	* capturing several times the same frame.  This can be detected by
-	* checking the frameInfo.bIsNewFrame structure member.
-	*/
-	grabParams.dwFlags = NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT;
+	grabParams.dwFlags = 
+		waitUntilReady
+		? NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY
+		: NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT;
+
 	// grabParams.dwFlags = NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY;
 
-	/*
-	* This structure will contain information about the captured frame.
-	*/
 	grabParams.pFrameGrabInfo = &frameInfo;
-
-	/*
-	* The frame will be mapped in video memory through this CUDA
-	* device pointer.
-	*/
 	grabParams.pCUDADeviceBuffer = &cuDevicePtr;
 
-	/*
-	* Capture a frame.
-	*/
 	NVFBCSTATUS fbcStatus = instance.nvFBCToCudaGrabFrame(fbcHandle, &grabParams);
 	if (fbcStatus != NVFBC_SUCCESS) {
 		fprintf(stderr, "%s\n", instance.nvFBCGetLastErrorStr(fbcHandle));

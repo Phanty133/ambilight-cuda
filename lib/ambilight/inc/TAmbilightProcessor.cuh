@@ -7,13 +7,11 @@
 #include <mutex>
 #include <functional>
 #include <condition_variable>
+#include <vector>
 #include "AmbilightProcessor.cuh"
 #include "KernelParams.h"
 #include "RollingAverage.h"
 #include <stdio.h>
-
-// TODO: Add adaptive frame capture mode - makes NvFBC wait until a frame is ready
-// TODO: Add flag/callback/wait method that alerts the client that a new frame is ready
 
 class TAmbilightProcessor {
 private:
@@ -30,12 +28,17 @@ private:
 	std::atomic<int> targetFrameTime{0}; // In microseconds
 	int frameAveragingTime; // seconds
 	RollingAverage frameTimeAvg;
+	std::atomic<bool> waitUntilReady{false};
 
 	// Processor
 	KernelParams kernelParams;
 	Sector* sectorMap;
 	AmbilightProcessor* tProcessor;
 
+	std::atomic<bool> frameReady{false};
+	std::vector<std::function<void()>> frameCallbacks;
+
+	void execFrameCallbacks();
 	void waitUntilActiveOrKilled();
 	int timedGrabFrame(AmbilightProcessor* tProcessor);
 public:
@@ -46,7 +49,7 @@ public:
 	std::thread* getThread();
 	bool detachThread();
 
-	void start(int targetFPS);
+	void start(int targetFPS, bool waitUntilReady = false);
 	void stop();
 	void kill();
 
@@ -55,6 +58,10 @@ public:
 	bool isActive();
 	int getTargetFPS();
 	float getActualFPS();
+
+	void onFrameReady(std::function<void()> frameCallback);
+	bool isFrameReady();
+	void clearFrameReadyFlag();
 };
 
 #endif
