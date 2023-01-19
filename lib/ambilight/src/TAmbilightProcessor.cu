@@ -93,8 +93,16 @@ int TAmbilightProcessor::timedGrabFrame(AmbilightProcessor* tProcessor) {
 
 void TAmbilightProcessor::start(int targetFPS, bool waitUntilReady) {
 	this->targetFrameTime = targetFPS == 0 ? 0 : (1000000.0f / targetFPS);
-	this->frameTimeAvg = RollingAverage(this->frameAveragingTime * targetFPS);
 	this->waitUntilReady = waitUntilReady;
+
+	// TODO: Improve rolling average frame counting when waitUntilReady=true
+	int rollingAverageFrameCount = 15;
+
+	if (!waitUntilReady) {
+		rollingAverageFrameCount = this->frameAveragingTime * targetFPS;
+	}
+
+	this->frameTimeAvg = RollingAverage(rollingAverageFrameCount);
 
 	this->grabActive = true;
 	this->tActiveCondVar.notify_all();
