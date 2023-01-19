@@ -12,7 +12,7 @@ TAmbilightProcessor::TAmbilightProcessor(
 
 std::thread* TAmbilightProcessor::createThread() {
 	// Create a new thread for the ambilight processor
-	return new std::thread([this](){
+	this->t = new std::thread([this](){
 		printf("Ambilight processor thread created!\n");
 
 		// Initialize processor
@@ -52,10 +52,15 @@ std::thread* TAmbilightProcessor::createThread() {
 
 		printf("Ambilight processor thread killed!\n");
 	});
+
+	return this->t;
 }
 
 TAmbilightProcessor::~TAmbilightProcessor() {
-	if (this->t != nullptr) delete this->t;
+	if (this->t != nullptr) {
+		this->kill();
+		delete this->t;
+	}
 }
 
 std::thread* TAmbilightProcessor::getThread() {
@@ -63,6 +68,7 @@ std::thread* TAmbilightProcessor::getThread() {
 }
 
 bool TAmbilightProcessor::detachThread() {
+	if (this->t == nullptr) return false;
 	if (!this->t->joinable()) return false;
 
 	this->t->detach();
@@ -100,6 +106,8 @@ void TAmbilightProcessor::stop() {
 }
 
 void TAmbilightProcessor::kill() {
+	if (this->t == nullptr) return;
+
 	this->mustKillThread = true;
 	this->tActiveCondVar.notify_all();
 }

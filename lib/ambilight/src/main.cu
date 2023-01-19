@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <thread>
-#include <functional>
 #include "AmbilightProcessor.cuh"
 #include "TAmbilightProcessor.cuh"
 #include "KernelParams.h"
@@ -75,7 +74,7 @@ extern "C" {
 	}
 
 	void tpStart(TAmbilightProcessor* p, int targetFPS, bool waitUntilReady) {
-		p->start(targetFPS);
+		p->start(targetFPS, waitUntilReady);
 	}
 
 	void tpStop(TAmbilightProcessor* p) {
@@ -102,7 +101,8 @@ extern "C" {
 		return p->getActualFPS();
 	}
 
-	void tpOnFrameReady(TAmbilightProcessor* p, std::function<void()> cb) {
+	typedef void (*FrameCallback)();
+	void tpOnFrameReady(TAmbilightProcessor* p, FrameCallback cb) {
 		return p->onFrameReady(cb);
 	}
 

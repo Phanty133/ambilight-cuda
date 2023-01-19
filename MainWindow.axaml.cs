@@ -15,7 +15,10 @@ public partial class MainWindow : Window
 		TestAmbilight();
 	}
 
-	AmbilightProcessor processor;
+	TAmbilightProcessor processor;
+
+	// Makes sure the delegate isn't garbage collected
+	static AmbilightFrameReadyCallback cbDelegate;
 
 	void TestAmbilight() {
 		// Define kernel parameters
@@ -41,15 +44,16 @@ public partial class MainWindow : Window
 		var sectorMap = new SectorMap(sectors);
 
 		// Init processor
-		processor = new AmbilightProcessor(kParams, sectorMap);
-		processor.InitCapture();
+		processor = new TAmbilightProcessor(kParams, sectorMap);
 
-		// Get frame
-		
-		
+		cbDelegate = new AmbilightFrameReadyCallback(ReadFrame);
+		processor.OnFrameReady(cbDelegate);
+
+		processor.StartCapture(9999, true);
 	}
 
-	void TimerCb(object? source, ElapsedEventArgs e) {
+	void ReadFrame() {
+		Console.WriteLine(String.Format("{0} FPS", processor.getActualFPS()));
 		var frame = processor.ReadFrame();
 
 		Console.WriteLine("-------READ------");

@@ -74,3 +74,5 @@ public struct HSVPixel {
 		return pixel;
 	}
 }
+
+public delegate void AmbilightFrameReadyCallback();
