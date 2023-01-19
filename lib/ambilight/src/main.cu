@@ -100,6 +100,7 @@ extern "C" {
 
 #include <chrono>
 #include <iostream>
+#include <vector>
 
 int main() {
 	// Generate basic test data
@@ -109,28 +110,64 @@ int main() {
 	params.frameWidth = 2560;
 	params.frameHeight = 1600;
 	params.frameSize = params.frameWidth * params.frameHeight;
-	params.sectorCount = 10;
+	params.sectorCount = 40;
 
 	// Define display sectors
-	auto sectors = new Sector[params.sectorCount];
-	int secWidth = params.frameWidth / params.sectorCount;
+	int xSectors = 10;
+	int ySectors = 10;
 
-	for (int i = 0; i < params.sectorCount; i++) {
-		sectors[i].index = i;
-		sectors[i].minX = i * secWidth;
-		sectors[i].minY = 0;
-		sectors[i].maxX = (i + 1) * secWidth;
-		sectors[i].maxY = 100;
+	auto sectors = new Sector[params.sectorCount];
+	int secWidth = params.frameWidth / xSectors;
+	int secHeight = (params.frameHeight - 100 * 2) / ySectors;
+
+	// Top
+	for (int i = 0; i < xSectors; i++) {
+		int sI = i;
+		sectors[sI].index = sI;
+		sectors[sI].minX = i * secWidth;
+		sectors[sI].minY = 0;
+		sectors[sI].maxX = (i + 1) * secWidth;
+		sectors[sI].maxY = 100;
 	}
 
-	// Init processor
+	// Bottom
+	for (int i = 0; i < xSectors; i++) {
+		int sI = i + 20;
+		sectors[sI].index = sI;
+		sectors[sI].minX = i * secWidth;
+		sectors[sI].minY = params.frameHeight - 100;
+		sectors[sI].maxX = (i + 1) * secWidth;
+		sectors[sI].maxY = params.frameHeight;
+	}
+
+	// Left
+	for (int i = 0; i < ySectors; i++) {
+		int sI = i + 30;
+		sectors[sI].index = sI;
+		sectors[sI].minX = 0;
+		sectors[sI].minY = 100 + i * secHeight;
+		sectors[sI].maxX = 100;
+		sectors[sI].maxY = 100 + (i + 1) * secHeight;
+	}
+
+	// Right
+	for (int i = 0; i < ySectors; i++) {
+		int sI = i + 10;
+		sectors[sI].index = sI;
+		sectors[sI].minX = 2500;
+		sectors[sI].minY = 100 + (i + 1) * secHeight;
+		sectors[sI].maxX = 2600;
+		sectors[sI].maxY = i * secHeight;
+	}
+
+	// // Init processor
 
 	TAmbilightProcessor tProcessor(params, sectors);
 
 	std::thread otherT([&tProcessor, &params](){
 		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-		tProcessor.start(60);
+		tProcessor.start(10000);
 		auto output = new AveragedHSVPixel[params.sectorCount];
 
 		int n = 0;

@@ -6,9 +6,11 @@
 #include <cuda.h>
 #include <chrono>
 #include <mutex>
+#include <vector>
 #include "FrameProcessing.cuh"
 #include "NvFBCCudaCapture.h"
 #include "CudaUtils.h"
+#include "LargestRectSolve.h"
 
 struct FrameData {
 	unsigned int sectorCount;
@@ -20,6 +22,7 @@ private:
 	// Config
 	KernelParams params;
 	Sector* sectorMap;
+	Sector largestEmptySector;
 
 	size_t outputMemSize;
 	size_t sectorMemSize;
@@ -32,6 +35,7 @@ private:
 	KernelParams* cuParams = nullptr;
 	Sector* cuSectorMap = nullptr;
 	SectorData* cuFrameOutput = nullptr;
+	Sector* cuLargestEmptySector = nullptr;
 
 	// Host memory
 	SectorData* frameOutput = nullptr;

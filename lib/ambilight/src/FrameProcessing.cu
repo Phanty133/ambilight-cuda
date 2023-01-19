@@ -36,24 +36,28 @@ __device__ void rgbToHSV(RGBPixel &rgb, HSVPixel &hsv) {
 	hsv.v = (uint8_t)(v * 32.0f);
 }
 
-// TODO: Precalculate middle of the screen minX, maxX, minY, minY values
+__device__ bool coordsInSector(unsigned int &x, unsigned int &y, Sector &sector) {
+	return x >= sector.minX
+		&& x < sector.maxX
+		&& y >= sector.minY
+		&& y < sector.maxY;
+}
+
 __device__ int getSectorIndex(
 	int pixelIndex,
 	KernelParams* params,
-	Sector* sectors
+	Sector* sectors,
+	Sector* largestEmpty
 ) {
 	unsigned int x = pixelIndex % params->frameWidth;
 	unsigned int y = (pixelIndex - x) / params->frameWidth;
 
+	if (coordsInSector(x, y, *largestEmpty)) return -1;
+
 	for (int i = params->sectorCount - 1; i >= 0; i--) {
 		Sector sector = sectors[i];
 
-		if (
-			x >= sector.minX
-			&& x < sector.maxX
-			&& y >= sector.minY
-			&& y < sector.maxY
-		) {
+		if (coordsInSector(x, y, sector)) {
 			return i;
 		}
 	}
@@ -75,13 +79,14 @@ __global__ void parseFrameKernel(
 	RGBPixel* frame,
 	SectorData* frameOut,
 	KernelParams* params,
-	Sector* sectors
+	Sector* sectors,
+	Sector* largestEmptySector
 ) {
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 
 	for (int i = index; i < params->frameSize; i += stride) {
-		int sectorIndex = getSectorIndex(i, params, sectors);
+		int sectorIndex = getSectorIndex(i, params, sectors, largestEmptySector);
 
 		if (sectorIndex == -1) continue;
 

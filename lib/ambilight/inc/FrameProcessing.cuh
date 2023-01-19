@@ -39,13 +39,15 @@ __device__ void parsePixel(
 /// @param frame CUDA buffer of a screenshot grabbed by NvFBC
 /// @param frameOut Output data pointer on the GPU 
 /// @param params Kernel parameter pointer on the GPU
-/// @param sectors Dislay sector map pointer on the GPU
+/// @param sectors Display sector map pointer on the GPU
+/// @param largestEmptySector Largest part of the screen without sectors. Pointer on GPU
 /// @return 
 __global__ void parseFrameKernel(
 	RGBPixel* frame,
 	SectorData* frameOut,
 	KernelParams* params,
-	Sector* sectors
+	Sector* sectors,
+	Sector* largestEmptySector
 );
 
 #endif

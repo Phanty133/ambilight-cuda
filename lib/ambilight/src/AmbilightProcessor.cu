@@ -1,13 +1,40 @@
 #include "AmbilightProcessor.cuh"
 
+// TODO: Precalculate largest N empty sectors (Probably with a size cut-off).
+// Multiple empty sector precalculations will help performance when the edge sectors
+// are at an offset.
+
 AmbilightProcessor::AmbilightProcessor(
 	KernelParams kernelParams,
 	Sector* sectorMap
 ) {
 	this->params = kernelParams;
 	this->sectorMap = sectorMap;
-
 	this->numBlocks = (params.frameSize + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+	// Precalculate the largest region of the screen without any sectors
+
+	// Convert the sector map to a vector of Rect
+	std::vector<Rect> rects;
+
+	for (int i = 0; i < kernelParams.sectorCount; i++) {
+		rects.push_back(sectorMap[i].toRect());
+	}
+
+	auto largestRect = largestRectBetweenRects(
+		kernelParams.frameWidth,
+		kernelParams.frameHeight,
+		rects
+	);
+
+	this->largestEmptySector = Sector::fromRect(largestRect);
+
+	printf("LargestEmpty: pos (%i, %i), size (%i, %i)\n",
+		largestRect.x,
+		largestRect.y,
+		largestRect.w,
+		largestRect.h
+	);
 }
 
 AmbilightProcessor::~AmbilightProcessor() {
@@ -36,6 +63,10 @@ void AmbilightProcessor::allocMemory() {
 	// Sector map
 	cudaMalloc(&this->cuSectorMap, this->sectorMemSize);
 	cudaMemcpy(this->cuSectorMap, this->sectorMap, this->sectorMemSize, cudaMemcpyHostToDevice);
+
+	// Largest sector
+	cudaMalloc(&this->cuLargestEmptySector, sizeof(Sector));
+	cudaMemcpy(this->cuLargestEmptySector, &this->largestEmptySector, sizeof(Sector), cudaMemcpyHostToDevice);
 
 	// Output data
 	cudaMalloc(&this->cuFrameOutput, this->outputMemSize);
@@ -76,8 +107,6 @@ bool AmbilightProcessor::initCapture() {
 	return true;
 }
 
-// TODO: Check if the frame has changed enough by first getting a difference map
-// TODO: Possibly check which parts of the screen should be updated based on the difference map?
 void AmbilightProcessor::grabFrame(std::mutex* outputMutex) {
 	// Init memory
 	cudaMemset(cuFrameOutput, 0, this->outputMemSize);
@@ -91,7 +120,8 @@ void AmbilightProcessor::grabFrame(std::mutex* outputMutex) {
 		(RGBPixel*)cuFrame,
 		this->cuFrameOutput,
 		this->cuParams,
-		this->cuSectorMap
+		this->cuSectorMap,
+		this->cuLargestEmptySector
 	);
 
 	cudaDeviceSynchronize();
@@ -148,6 +178,7 @@ void AmbilightProcessor::deallocMemory() {
 	if (this->cuFrameOutput != nullptr) cudaFree(this->cuFrameOutput);
 	if (this->cuSectorMap != nullptr) cudaFree(this->cuSectorMap);
 	if (this->cuParams != nullptr) cudaFree(this->cuParams);
+	if (this->cuLargestEmptySector != nullptr) cudaFree(this->cuLargestEmptySector);
 
 	if (this->frameOutput != nullptr) free(this->frameOutput);
 

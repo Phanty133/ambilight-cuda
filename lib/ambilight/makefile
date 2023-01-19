@@ -32,11 +32,11 @@ endif
 
 HEADERS = inc/NvFBCUtils.h inc/cuda.h inc/CudaUtils.h inc/NvFBC.h inc/NvFBCCudaCapture.h \
 	inc/FrameProcessing.cuh inc/AmbilightProcessor.cuh inc/TAmbilightProcessor.cuh \
-	inc/RollingAverage.h
+	inc/RollingAverage.h inc/LargestRectSolve.h
 
 SOURCES = src/main.cu src/CudaUtils.cpp src/NvFBCUtils.cpp src/NvFBCCudaCapture.cpp \
 	src/FrameProcessing.cu src/AmbilightProcessor.cu src/TAmbilightProcessor.cu \
-	src/RollingAverage.cpp
+	src/RollingAverage.cpp src/LargestRectSolve.cpp
 
 OBJECTS = $(call BUILD_OBJECT_LIST,$(SOURCES))
 

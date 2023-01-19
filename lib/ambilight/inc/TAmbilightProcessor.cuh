@@ -12,6 +12,9 @@
 #include "RollingAverage.h"
 #include <stdio.h>
 
+// TODO: Add adaptive frame capture mode - makes NvFBC wait until a frame is ready
+// TODO: Add flag/callback/wait method that alerts the client that a new frame is ready
+
 class TAmbilightProcessor {
 private:
 	// Threading

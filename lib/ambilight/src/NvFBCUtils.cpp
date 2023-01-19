@@ -169,6 +169,7 @@ NVFBC_BOOL nvfbcGrabFrame(
 	* checking the frameInfo.bIsNewFrame structure member.
 	*/
 	grabParams.dwFlags = NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT;
+	// grabParams.dwFlags = NVFBC_TOCUDA_GRAB_FLAGS_NOWAIT_IF_NEW_FRAME_READY;
 
 	/*
 	* This structure will contain information about the captured frame.

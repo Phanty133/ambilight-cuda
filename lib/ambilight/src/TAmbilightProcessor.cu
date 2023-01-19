@@ -118,5 +118,9 @@ bool TAmbilightProcessor::isActive() {
 }
 
 float TAmbilightProcessor::getActualFPS() {
-	return 1000000.0f / this->frameTimeAvg.getAverage();
+	float avg =this->frameTimeAvg.getAverage();
+
+	if (avg == 0) return 0;
+
+	return 1000000.0f / avg;
 }
