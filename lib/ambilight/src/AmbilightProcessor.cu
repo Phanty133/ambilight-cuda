@@ -29,12 +29,12 @@ AmbilightProcessor::AmbilightProcessor(
 
 	this->largestEmptySector = Sector::fromRect(largestRect);
 
-	printf("LargestEmpty: pos (%i, %i), size (%i, %i)\n",
-		largestRect.x,
-		largestRect.y,
-		largestRect.w,
-		largestRect.h
-	);
+	// printf("LargestEmpty: pos (%i, %i), size (%i, %i)\n",
+	// 	largestRect.x,
+	// 	largestRect.y,
+	// 	largestRect.w,
+	// 	largestRect.h
+	// );
 }
 
 AmbilightProcessor::~AmbilightProcessor() {
@@ -191,7 +191,6 @@ void AmbilightProcessor::deallocMemory() {
 }
 
 void AmbilightProcessor::setCaptureReadyMode(bool waitUntilReady) {
-	printf("WaitUntilReady: %i\n", waitUntilReady);
 	this->waitUntilReady = waitUntilReady;
 	this->fbcCapture->waitUntilReady = waitUntilReady;
 }

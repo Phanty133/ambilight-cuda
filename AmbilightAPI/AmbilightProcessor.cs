@@ -103,21 +103,4 @@ public class AmbilightProcessor {
 
 		return output;
 	}
-
-	public bool StartContinousGrabbing(int targetFPS) {
-		// TODO: Add warning when initializing with null processor
-		if (cProcessor == null) return false;
-		if (!CaptureInitialized) return false;
-
-		CAmbilightProcessor.pStartContinuousGrabbing(cProcessor.Value, targetFPS);
-
-		return true;
-	}
-
-	public void StopContinousGrabbing(int targetFPS) {
-		// TODO: Add warning when initializing with null processor
-		if (cProcessor == null) return;
-
-		CAmbilightProcessor.pStopContinuousGrabbing(cProcessor.Value);
-	}
 }

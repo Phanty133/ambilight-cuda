@@ -46,12 +46,7 @@ public partial class MainWindow : Window
 
 		// Get frame
 		
-		processor.StartContinousGrabbing(30);
-
-		System.Timers.Timer aTimer = new System.Timers.Timer();
-		aTimer.Elapsed += new ElapsedEventHandler(TimerCb);
-		aTimer.Interval = 5000;
-		aTimer.Enabled = true;
+		
 	}
 
 	void TimerCb(object? source, ElapsedEventArgs e) {
